@@ -1,0 +1,62 @@
+<app-viewer class="content">
+  <h2>みんなの投稿</h2>
+  <h3>{name}</h3>
+  <ul class="dots">
+    <li each="{row, y in dots}">
+      <ul class="row">
+        <li class="{active: val==1}" each="{val, x in row}" onclick="{paint.bind(this, x, y)}"></li>
+      </ul>
+    </li>
+  </ul>
+  <select name="digimonID" onchange="{digimonChange}">
+    <option value="">選択してください</option>
+    <option each="{digimon, i in digimons}" value="{i}">{digimon.Name}</option>
+  </select>
+
+  <style scoped>
+  </style>
+
+  <script>
+    var self = this;
+    self.digimons = [];
+    self.default = [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]];
+    self.dots = self.default;
+    self.name = '---';
+    self.getAll = function(e) {
+      return $.ajax({
+        type: 'GET',
+        url: '/api/digimon',
+        dataType: 'json'
+      }).done(function(ret) {
+        self.digimons = ret;
+      });
+    }
+    self.digimonChange = function(e) {
+      var index = $('[name="digimonID"]').val();
+      if(self.digimons[index]) {
+        self.dots = self.digimons[index].DataObj;
+        self.name = self.digimons[index].Name;
+      } else {
+        self.dots = self.default;
+        self.name = '---';
+      }
+      self.update();
+    }
+
+    // 初回処理
+    self.getAll().then(function() {
+      self.update();
+      $('[name="digimonID"]').val('0');
+      self.digimonChange();
+    });
+
+    // デジモン一覧の更新を監視
+    observer.on('digimons', function(ret) {
+      self.digimons = ret;
+      self.update();
+      var max = $('[name="digimonID"]').find(":last").val();
+      $('[name="digimonID"]').val(max);
+      self.digimonChange();
+    });
+  </script>
+</app-viewer>
