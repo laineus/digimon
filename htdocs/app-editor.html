@@ -1,0 +1,49 @@
+<app-editor class="content">
+  <h2>新規投稿</h2>
+  <h3>{name}</h3>
+  <ul class="dots">
+    <li each="{row, y in dots}">
+      <ul class="row">
+        <li class="{active: val==1}" each="{val, x in row}" onclick="{paint.bind(this, x, y)}"></li>
+      </ul>
+    </li>
+  </ul>
+  <input name="name" type="text" onkeyup="{changeName}" onchange="{changeName}">
+  <button onclick="{save}">投稿</button>
+
+  <style scoped>
+  </style>
+
+  <script>
+    var self = this;
+    self.dots = [[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]];
+    self.name = '---';
+    self.paint = function(x, y, e) {
+      self.dots[y][x] = (self.dots[y][x] == 1) ? 0 : 1;
+      self.update();
+    }
+    self.changeName = function(e) {
+      self.name = $('[name="name"]').val();
+      self.update();
+    }
+    self.save = function(e) {
+      if(self.name == '' || self.name == '---') {
+        alert('名前を入力してください。');
+      } else if(confirm('このドット絵を「'+self.name+'」として投稿します。')) {
+        $.ajax({
+          type: 'POST',
+          url: '/api/digimon',
+          data: JSON.stringify({name: self.name, data: self.dots}),
+          contentType: 'application/json',
+          dataType: 'json'
+        }).done(function(ret) {
+          if(ret) {
+            observer.trigger('digimons', ret);
+          } else {
+            alert('投稿に失敗しました。');
+          }
+        });
+      }
+    }
+  </script>
+</app-editor>

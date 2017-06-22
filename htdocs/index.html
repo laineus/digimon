@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Digital Pixel Monstor</title>
+  <meta name="viewport" content="width=device-width">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js"></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/riot/2.3.18/riot+compiler.js'></script>
+</head>
+<body>
+  <div class="bg"></div>
+
+  <header><h1>- Digital Pixel Monstor -</h1></header>
+
+  <article>
+    <app-editor><div class="loading"></div></app-editor>
+    <app-viewer><div class="loading"></div></app-viewer>
+  </article>
+
+  <footer>
+    <p>※ オリジナルのキャラを投稿しても問題ありません。</p>
+    <p>※ 誤投稿やテスト投稿、イタズラと見られるものは管理者判断で削除させていただきます。</p>
+    <p>※ 某社、某キャラとは特に関係ありません。ただのドット絵投稿サイトです。</p>
+  </footer>
+
+  <script type="riot/tag" src="app-editor.html"></script>
+  <script type="riot/tag" src="app-viewer.html"></script>
+
+  <script>
+    var observer = riot.observable();
+    riot.mount('*');
+  </script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+    }
+    body::before,
+    body::after {
+      content: ' ';
+      display: block;
+      position: absolute;
+      background: #38c;
+      box-shadow: 0 0 0 10px #fff;
+      top: 10px;
+      left: 10px;
+      width: 15px;
+      height: 15px;
+      z-index: 10;
+    }
+    body::after {
+      top: auto;
+      left: auto;
+      right: 10px;
+      bottom: 10px;
+    }
+    .bg {
+      border: 1px solid #38c;
+      border-radius: 6px;
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      right: 15px;
+      bottom: 15px;
+    }
+    header,
+    article {
+      padding: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: center;
+    }
+    footer {
+      padding-bottom: 80px;
+    }
+    footer p {
+      color: #38c;
+      font-size: 12px;
+    }
+    h1 {
+      font-size: 21px;
+      color: #38c;
+    }
+    h2 {
+      background: #fff;
+      padding: 0 5px;
+      font-size: 12px;
+      color: #38c;
+      position: absolute;
+      top: -7px;
+    }
+    h3 {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #38c;
+      font-size: 15px;
+      color: #fff;
+      text-align: center;
+      position: relative;
+      height: 25px;
+    }
+    h3::before,
+    h3::after {
+      content: ' ';
+      display: block;
+      background: #38c;
+      position: absolute;
+      width: 5px;
+      height: 15px;
+      top: 5px;
+      left: -5px;
+    }
+    h3::after {
+      left: auto;
+      right: -5px;
+    }
+    button {
+      margin-top: 7px;
+    }
+    .content {
+      display: flex;
+      flex-direction: column;
+      padding: 15px;
+      border: 1px solid #38c;
+      border-radius: 6px;
+      margin: 15px;
+      position: relative;
+    }
+    .loading {
+      width: 100%;
+      height: 100%;
+      padding: 20px;
+      display: flex;
+    }
+    .loading::before {
+      content: " ";
+      display: block;
+      margin: auto;
+      width: 100px;
+      height: 100px;
+      border: 5px solid #ddd;
+      border-top-color: #38c;
+      border-radius: 100%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin {
+      0% {transform: rotate(0deg);}
+      100% {transform: rotate(360deg);}
+    }
+    .dots {
+      margin: 10px auto;
+      display: inline-flex;
+      flex-direction: column;
+      border-top: 1px solid rgba(0,0,0,0.15);
+      border-left: 1px solid rgba(0,0,0,0.15);
+    }
+    .dots .row {
+      display: flex;
+      flex-direction: row;
+    }
+    .dots li {
+      list-style: none;
+    }
+    .dots .row li {
+      width: 7px;
+      height: 7px;
+      border-right: 1px solid rgba(0,0,0,0.15);
+      border-bottom: 1px solid rgba(0,0,0,0.15);
+    }
+    .dots .row li:hover {
+      background: #ccc;
+    }
+    .dots .row li.active {
+      background: #333;
+    }
+    .dots .row li.active:hover {
+      background: #666;
+    }
+  </style>
+</body>
+</html>
