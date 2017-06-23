@@ -51,6 +51,7 @@ func checkSize(dots *[][]int, width, height int) bool {
     for _, row := range *dots {
       if len(row) != width {
         chk = false
+        break
       }
     }
   }
