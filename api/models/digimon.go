@@ -1,7 +1,7 @@
 package model
 
 import (
-	"encoding/json"
+  "encoding/json"
 )
 
 // DigimonRepository デジモンリポジトリ
