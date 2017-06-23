@@ -29,6 +29,8 @@
         dataType: 'json'
       }).done(function(ret) {
         self.digimons = ret;
+      }).fail(function() {
+        alert('データの取得に失敗しました。');
       });
     }
     self.digimonChange = function(e) {
