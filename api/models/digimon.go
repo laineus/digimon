@@ -1,7 +1,11 @@
 package model
 
 import (
+	"context"
+	"database/sql"
 	"encoding/json"
+	"errors"
+	"time"
 )
 
 // DigimonRepository デジモンリポジトリ
@@ -38,15 +42,61 @@ func (m DigimonRepository) GetByID(id int) *Digimon {
 	return ret
 }
 
-// SetNewDigimon 新規デジモン作成
-func (m DigimonRepository) SetNewDigimon(name string, data *[][]int) *Digimon {
+// ErrPostRateLimited は全ユーザー共通の投稿制限を表す。
+var ErrPostRateLimited = errors.New("posting is limited to once per minute")
+
+// PostIntervalSeconds は全ユーザー共通の投稿間隔。
+const PostIntervalSeconds = 60
+
+// SetNewDigimon はDB上の投稿を確認し、全体で60秒に1件だけ作成する。
+func (m DigimonRepository) SetNewDigimon(name string, data *[][]int) error {
+	bytes, err := json.Marshal(data)
+	if err != nil {
+		return err
+	}
 	db := connect()
-	digimon := Digimon{}
-	digimon.Name = name
-	bytes, _ := json.Marshal(data)
-	digimon.Data = string(bytes)
-	json.Unmarshal([]byte(digimon.Data), &digimon.DataObj)
-	db.Create(&digimon)
-	db.Close()
-	return &digimon
+	defer db.Close()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	conn, err := db.DB().Conn(ctx)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	// MySQLの名前付きロックは同じ接続で取得・解放する。
+	// DBごとにロックを分け、複数プロセスからの同時投稿も直列化する。
+	var locked sql.NullInt64
+	if err := conn.QueryRowContext(ctx,
+		"SELECT GET_LOCK(CONCAT('digimon-post:', SHA1(DATABASE())), 0)").Scan(&locked); err != nil {
+		return err
+	}
+	if !locked.Valid {
+		return errors.New("failed to acquire posting lock")
+	}
+	if locked.Int64 != 1 {
+		return ErrPostRateLimited
+	}
+	defer func() {
+		// リクエスト処理のタイムアウト後もロックを解放する。
+		unlockCtx, unlockCancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer unlockCancel()
+		conn.ExecContext(unlockCtx, "SELECT RELEASE_LOCK(CONCAT('digimon-post:', SHA1(DATABASE())))")
+	}()
+
+	var recent bool
+	if err := conn.QueryRowContext(ctx,
+		"SELECT EXISTS(SELECT 1 FROM digimons WHERE created_at > DATE_SUB(NOW(), INTERVAL ? SECOND))",
+		PostIntervalSeconds).Scan(&recent); err != nil {
+		return err
+	}
+	if recent {
+		return ErrPostRateLimited
+	}
+
+	_, err = conn.ExecContext(ctx,
+		"INSERT INTO digimons (name, data, created_at, updated_at) VALUES (?, ?, NOW(), NOW())",
+		name, string(bytes))
+	return err
 }

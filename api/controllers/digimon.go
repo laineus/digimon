@@ -1,8 +1,10 @@
 package controller
 
 import (
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/laineus/digimon/api/models"
+	"net/http"
 	"strconv"
 )
 
@@ -28,14 +30,25 @@ type Request struct {
 // PostDigimon デジモン投稿api
 func PostDigimon(c *gin.Context) {
 	var request Request
-	c.BindJSON(&request)
+	if err := c.ShouldBindJSON(&request); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+		return
+	}
 	chk := checkSize(&request.Data, 16, 16)
 	if chk {
 		if request.Name == "" {
 			request.Name = "no name"
 		}
 		repo := model.NewDigimonRepository()
-		repo.SetNewDigimon(request.Name, &request.Data)
+		if err := repo.SetNewDigimon(request.Name, &request.Data); err != nil {
+			if errors.Is(err, model.ErrPostRateLimited) {
+				c.Header("Retry-After", strconv.Itoa(model.PostIntervalSeconds))
+				c.JSON(http.StatusTooManyRequests, gin.H{"error": "投稿は全体で60秒に1件までです"})
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save post"})
+			}
+			return
+		}
 		digimons := repo.GetAll()
 		c.JSON(200, digimons)
 	} else {
